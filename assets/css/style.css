@@ -1,0 +1,372 @@
+/* General Styling */
+body {
+    font-family: "Arial", sans-serif;
+    margin: 0;
+    padding: 0;
+    background: #dce9db; /* Light green background */
+    color: #000;
+}
+
+/* Header Styling */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 20px 40px;
+    font-weight: bold;
+    font-size: 18px;
+}
+
+header a {
+    text-decoration: none;
+    color: #000;
+}
+
+/* Landing Page Layout */
+.landing-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: auto;
+    padding: 80px 40px;
+}
+
+/* Text Content */
+.text-content {
+    max-width: 45%;
+}
+
+.text-content h1 {
+    font-size: 48px;
+    font-weight: bold;
+    line-height: 1.2;
+}
+
+.text-content p {
+    font-size: 18px;
+    color: #333;
+}
+
+/* CTA Button */
+.cta-button {
+    display: inline-block;
+    padding: 15px 30px;
+    font-size: 18px;
+    background: #4CAF50;
+    color: #fff;
+    text-decoration: none;
+    border-radius: 10px;
+    font-weight: bold;
+    margin-top: 20px;
+    border: none;
+    transition: background 0.3s ease-in-out;
+}
+
+.cta-button:hover {
+    background: #45a049;
+}
+
+/* Earth Image */
+.earth-image {
+    max-width: 50%;
+}
+
+.earth-image img {
+    width: 100%;
+    animation: float 3s ease-in-out infinite;
+}
+
+/* Floating Animation */
+@keyframes float {
+    0%, 100% {
+        transform: translateY(0);
+    }
+    50% {
+        transform: translateY(-10px);
+    }
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+    .landing-container {
+        flex-direction: column;
+        text-align: center;
+    }
+
+    .text-content, .earth-image {
+        max-width: 100%;
+    }
+}
+
+/* About Page Layout */
+.about-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: auto;
+    padding: 5vh 40px;
+    height: calc(100vh - 80px); /* Ensures it matches Home page height */
+    overflow: hidden; /* Prevents scroll */
+    box-sizing: border-box;
+}
+
+
+/* About Image */
+.about-image {
+    max-width: 50%;
+}
+
+.about-image img {
+    width: 100%;
+    max-height: 70vh;
+    object-fit: contain;
+}
+
+/* About Content */
+.about-content {
+    max-width: 45%;
+}
+
+.about-content h2 {
+    font-size: 32px;
+    font-weight: bold;
+    margin-bottom: 20px;
+}
+
+.about-content h3 {
+    font-size: 24px;
+    font-weight: bold;
+    margin-top: 15px;
+}
+
+.about-content p {
+    font-size: 18px;
+    color: #333;
+    margin-bottom: 10px;
+}
+
+.bold {
+    font-weight: bold;
+}
+
+ul {
+    list-style: none;
+    padding: 0;
+}
+
+ul li {
+    font-size: 18px;
+    margin-bottom: 10px;
+}
+
+/* Fun Fact Box */
+.fun-fact {
+    font-size: 16px;
+    color: #000;
+    background: #e6f7e6;
+    padding: 15px;
+    border-radius: 10px;
+}
+
+/* 📱 Responsive Design for Mobile */
+@media (max-width: 900px) {
+    .about-container {
+        flex-direction: column;
+        text-align: center;
+        height: auto;
+        padding: 10vh 20px;
+    }
+
+    .about-image {
+        max-width: 90%;
+        margin-bottom: 20px;
+    }
+
+    .about-content {
+        max-width: 100%;
+    }
+
+    .about-content h2 {
+        font-size: 28px;
+    }
+
+    .about-content h3 {
+        font-size: 22px;
+    }
+
+    .about-content p,
+    ul li {
+        font-size: 16px;
+    }
+
+    .fun-fact {
+        font-size: 14px;
+        padding: 10px;
+    }
+}
+
+/* Ensure header stays above all content */
+header {
+    position: relative;
+    z-index: 100; /* Higher than other elements */
+    background: rgba(220, 233, 219, 0.9); /* Optional: Adds slight transparency */
+}
+
+/* Prevent About content from overlapping */
+.about-container {
+    position: relative;
+    z-index: 1; /* Keeps it below the navigation */
+}
+
+
+/* Header Styling */
+header {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px 40px; /* Slightly reduced padding */
+    font-weight: bold;
+}
+
+header h1 {
+    font-size: 22px; /* Reduced the size of "SUSTAINABLE TRAVEL PLANNER" */
+    margin: 0;
+}
+
+nav {
+    display: flex;
+    gap: 20px;
+}
+
+nav a {
+    text-decoration: none;
+    color: #000;
+    font-size: 18px;
+    font-weight: bold;
+    transition: color 0.3s ease-in-out;
+}
+
+nav a:hover {
+    color: #4CAF50;
+}
+
+/* Landing Page Layout */
+.landing-container {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    max-width: 1200px;
+    margin: auto;
+    padding: 80px 40px;
+}
+
+/* Text Content */
+.text-content {
+    max-width: 50%;
+}
+
+.text-content h1 {
+    font-size: 64px; /* Increased subtitle size */
+    font-weight: bold;
+    line-height: 1.1;
+}
+
+.text-content p {
+    font-size: 22px; /* Increased paragraph size */
+    color: #333;
+}
+
+/* Calculator Page Layout */
+.calculator {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 90vh;
+    padding: 40px;
+    background: #dce9db;
+}
+
+/* Grid Layout for Cards */
+.calculator-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    max-width: 1100px;
+    width: 100%;
+}
+
+/* Card Styling */
+.card {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+/* Route Selection Form */
+.card form {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.card input, 
+.card select {
+    padding: 12px;
+    font-size: 16px;
+    border: 1px solid #ccc;
+    border-radius: 8px;
+}
+
+.card button {
+    padding: 12px;
+    background: #4CAF50;
+    color: white;
+    font-size: 16px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    transition: 0.3s;
+}
+
+.card button:hover {
+    background: #45a049;
+}
+
+/* Map Styling */
+#map {
+    width: 100%;
+    height: 250px;
+    border-radius: 10px;
+}
+
+/* Weather Box */
+.weather-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    font-size: 18px;
+    font-weight: bold;
+}
+
+/* Carbon Footprint */
+.co2-result {
+    font-size: 40px;
+    font-weight: bold;
+    color: #333;
+}
+
+/* Responsive Design */
+@media (max-width: 900px) {
+    .calculator-grid {
+        grid-template-columns: 1fr;
+    }
+
+    .card {
+        width: 90%;
+        margin: auto;
+    }
+}

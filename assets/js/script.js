@@ -1,0 +1,1 @@
+console.log("Sustainable Travel Planner script loaded.");
