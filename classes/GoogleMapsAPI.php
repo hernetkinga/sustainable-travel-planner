@@ -21,8 +21,22 @@ class GoogleMapsAPI {
             $origin = ['lat' => $_POST['origin_lat'], 'lng' => $_POST['origin_lng']];
             $destination = ['lat' => $_POST['destination_lat'], 'lng' => $_POST['destination_lng']];
         } else {
-            $origin = self::getCoordinates($origin);
-            $destination = self::getCoordinates($destination);
+            static $storedCoordinates = [];
+
+            $originKey = is_array($origin) ? json_encode($origin) : $origin;
+            $destinationKey = is_array($destination) ? json_encode($destination) : $destination;
+            
+            if (!isset($storedCoordinates[$originKey])) {
+                $storedCoordinates[$originKey] = self::getCoordinates($origin);
+            }
+            if (!isset($storedCoordinates[$destinationKey])) {
+                $storedCoordinates[$destinationKey] = self::getCoordinates($destination);
+            }
+            
+            $origin = $storedCoordinates[$originKey];
+            $destination = $storedCoordinates[$destinationKey];
+            
+            
         }
         
         if (!$origin || !$destination) {
@@ -47,8 +61,10 @@ class GoogleMapsAPI {
         $postData = [
             "origin" => ["location" => ["latLng" => ["latitude" => $origin['lat'], "longitude" => $origin['lng']]]],
             "destination" => ["location" => ["latLng" => ["latitude" => $destination['lat'], "longitude" => $destination['lng']]]],
-            "travelMode" => $mode
+            "travelMode" => $mode,
+            "computeAlternativeRoutes" => true // Pozwala na wybór lepszej trasy
         ];
+        
 
         // Add routing preference for driving
         if ($mode == "DRIVE") {
@@ -106,15 +122,22 @@ class GoogleMapsAPI {
         $data = json_decode($response, true);
 
         if (!isset($data['routes'][0])) {
-            return ["error" => "No route found for selected transport mode."];
+            return [
+                "error" => "No route found for selected transport mode.",
+                "polyline" => "", // Ensure polyline is empty to avoid JavaScript errors
+            ];
         }
-
+        
+        $polyline = isset($data['routes'][0]['polyline']['encodedPolyline']) ? 
+            $data['routes'][0]['polyline']['encodedPolyline'] : '';
+        
         return [
             "distance" => $data['routes'][0]['distanceMeters'] / 1000, // Convert meters to km
             "duration" => $data['routes'][0]['duration'] ?? "Unknown",
-            "polyline" => $data['routes'][0]['polyline']['encodedPolyline'] ?? "",
+            "polyline" => $polyline, // Store polyline
             "steps" => $data['routes'][0]['legs'][0]['steps'] ?? []
         ];
+        
     }
 }
 ?>

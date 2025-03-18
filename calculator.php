@@ -138,20 +138,30 @@ function displayPolyline(encodedPolyline) {
         return;
     }
 
-    const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
-    const polyline = new google.maps.Polyline({
-        path: decodedPath,
-        geodesic: true,
-        strokeColor: '#FF0000',
-        strokeOpacity: 1.0,
-        strokeWeight: 5
-    });
-    polyline.setMap(map);
+    console.log("Received polyline:", encodedPolyline);
 
-    const bounds = new google.maps.LatLngBounds();
-    decodedPath.forEach(latLng => bounds.extend(latLng));
-    map.fitBounds(bounds);
+    try {
+        const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
+        console.log("Decoded path:", decodedPath);
+
+        const polyline = new google.maps.Polyline({
+            path: decodedPath,
+            geodesic: true,
+            strokeColor: '#FF0000',
+            strokeOpacity: 1.0,
+            strokeWeight: 5
+        });
+
+        polyline.setMap(map);
+
+        const bounds = new google.maps.LatLngBounds();
+        decodedPath.forEach(latLng => bounds.extend(latLng));
+        map.fitBounds(bounds);
+    } catch (error) {
+        console.error("Error decoding polyline:", error);
+    }
 }
+
 
 // Display warning for certain modes
 function showWarning(transport) {
