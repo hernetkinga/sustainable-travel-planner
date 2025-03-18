@@ -25,7 +25,6 @@ class GoogleMapsAPI {
             $destination = self::getCoordinates($destination);
         }
         
-
         if (!$origin || !$destination) {
             return ["error" => "Invalid location coordinates."];
         }
@@ -36,6 +35,9 @@ class GoogleMapsAPI {
             "Bus" => "TRANSIT",
             "Train" => "TRANSIT",
             "Tram" => "TRANSIT",
+            "Subway" => "TRANSIT",
+            "Light Rail" => "TRANSIT",
+            "Rail" => "TRANSIT",
             "On foot" => "WALK",
             "Bike" => "BICYCLE"
         ];
@@ -48,15 +50,39 @@ class GoogleMapsAPI {
             "travelMode" => $mode
         ];
 
-        // Add routing preference for driving and transit
+        // Add routing preference for driving
         if ($mode == "DRIVE") {
             $postData["routingPreference"] = "TRAFFIC_AWARE_OPTIMAL";
         }
 
+        // Specify transit preferences for each transit mode
         if ($mode == "TRANSIT") {
+            $allowedModes = [];
+            switch ($transport) {
+                case "Bus":
+                    $allowedModes = ["BUS"];
+                    break;
+                case "Train":
+                    $allowedModes = ["TRAIN"];
+                    break;
+                case "Tram":
+                    $allowedModes = ["LIGHT_RAIL"];
+                    break;
+                case "Subway":
+                    $allowedModes = ["SUBWAY"];
+                    break;
+                case "Light Rail":
+                    $allowedModes = ["LIGHT_RAIL"];
+                    break;
+                case "Rail":
+                    $allowedModes = ["RAIL"];
+                    break;
+                default:
+                    $allowedModes = ["BUS", "SUBWAY", "TRAIN", "LIGHT_RAIL", "RAIL"];
+            }
+
             $postData["transitPreferences"] = [
-                "routingPreference" => "LESS_WALKING",
-                "allowedTravelModes" => ["BUS", "SUBWAY", "TRAIN", "LIGHT_RAIL", "RAIL"]
+                "allowedTravelModes" => $allowedModes
             ];
             $postData["departureTime"] = date('c'); // Required for transit
         }
