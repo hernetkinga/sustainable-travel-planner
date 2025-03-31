@@ -624,6 +624,45 @@ button {
     margin: auto;
   }
 }
+@media (max-width: 1300px) {
+  .calculator-wrapper {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 768px) {
+  .calculator-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    max-width: 90%;
+    margin: auto;
+  }
+
+  .route-card form input,
+  .route-card form select,
+  .route-card form button {
+    width: 100%;
+  }
+
+  .card h2 {
+    font-size: 14px;
+  }
+
+  .co2-result {
+    font-size: 28px;
+  }
+
+  .tips-list li {
+    font-size: 13px;
+  }
+
+  #dynamic-legend {
+    position: static !important;
+    margin-top: 10px;
+  }
+}
 
 </style>
 
