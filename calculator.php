@@ -34,99 +34,94 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 ?>
 
 <section class="calculator">
-    <div class="calculator-grid">
+<div class="calculator-wrapper">
+  <div class="card route-card">
+    <!-- Route Selection -->
+    <h2>Choose Your Route</h2>
+    <form method="post" action="calculator.php">
+      <input type="text" id="origin" name="origin" value="<?= htmlspecialchars($origin); ?>" placeholder="Enter your starting point" required>
+      <input type="text" id="destination" name="destination" value="<?= htmlspecialchars($destination); ?>" placeholder="Enter your destination" required>
+      <select id="transport" name="transport" required>
+        <option value="Car" <?= ($transport == 'Car') ? 'selected' : '' ?>>Car</option>
+        <option value="Motorcycle" <?= ($transport == 'Motorcycle') ? 'selected' : '' ?>>Motorcycle</option>
+        <option value="Public" <?= ($transport == 'Public') ? 'selected' : '' ?>>Public Transport (Mixed)</option>
+        <option value="On foot" <?= ($transport == 'On foot') ? 'selected' : '' ?>>On foot</option>
+        <option value="Bike" <?= ($transport == 'Bike') ? 'selected' : '' ?>>Bike</option>
+      </select>
+      <button type="submit">Calculate</button>
+    </form>
+  </div>
 
-        <!-- Route Form -->
-        <div class="card">
-            <h2>Choose Your Route</h2>
-            <form method="post" action="calculator.php">
-                <input type="text" id="origin" name="origin" value="<?php echo htmlspecialchars($origin); ?>" placeholder="Enter your starting point" required>
-                <input type="text" id="destination" name="destination" value="<?php echo htmlspecialchars($destination); ?>" placeholder="Enter your destination" required>
+  <div class="card map-card">
+    <!-- Google Map -->
+    <h2>Your Route on Maps</h2>
+    <div id="map"></div>
+  </div>
 
-                <select id="transport" name="transport" required>
-                    <option value="Car" <?= ($transport == 'Car') ? 'selected' : '' ?>>Car</option>
-                    <option value="Motorcycle" <?= ($transport == 'Motorcycle') ? 'selected' : '' ?>>Motorcycle</option>
-                    <option value="Public" <?= ($transport == 'Public') ? 'selected' : '' ?>>Public Transport (Mixed)</option>
-                    <option value="On foot" <?= ($transport == 'On foot') ? 'selected' : '' ?>>On foot</option>
-                    <option value="Bike" <?= ($transport == 'Bike') ? 'selected' : '' ?>>Bike</option>
-                </select>
-
-                <button type="submit">Calculate</button>
-            </form>
-        </div>
-
-        <!-- Map + Transit Schedule Side by Side -->
-        <div class="map-transit-container">
-            <div class="card map-card">
-                <h2>Your Route on Maps</h2>
-                <div id="map"></div>
-                <?php if ($transport === 'Public'): ?>
-                <div id="legend">
-                    <h4>Transport Legend</h4>
-                    <div><span style="background-color: #ffc107"></span> Bus</div>
-                    <div><span style="background-color: #17a2b8"></span> Subway</div>
-                    <div><span style="background-color: #8e44ad"></span> Train / Rail</div>
-                    <div><span style="background-color: #00bcd4"></span> Light Rail</div>
-                    <div><span style="background-color: #5e35b1"></span> Heavy Rail</div>
-                    <div><span style="background-color: #6c757d"></span> On foot</div>
-                </div>
-                <?php endif; ?>
-            </div>
-
-            <div class="card schedule-card">
-                <?php if (!empty($routeData['transitSegments'])): ?>
-                <div class="schedule-container">
-                    <h2>Transit Schedule</h2>
-                    <ul>
-                        <?php foreach ($routeData['transitSegments'] as $segment): ?>
-                            <li>
-                                <strong><?= htmlspecialchars($segment['vehicle']) ?> <?= htmlspecialchars($segment['line']) ?></strong><br>
-                                From <em><?= htmlspecialchars($segment['from']) ?></em> at <strong><?= htmlspecialchars($segment['departureTime']) ?></strong><br>
-                                To <em><?= htmlspecialchars($segment['to']) ?></em> at <strong><?= htmlspecialchars($segment['arrivalTime']) ?></strong><br>
-                                Distance: <?= round($segment['distance'], 2) ?> km
-                            </li>
-                            <hr>
-                        <?php endforeach; ?>
-                    </ul>
-                </div>
-                <?php endif; ?>
-            </div>
-        </div>
-
-        <!-- Weather -->
-        <div class="card">
-            <h2>Weather Forecast</h2>
-            <?php if($weatherData): ?>
-                <div class="weather-box">
-                    <p class="temperature"><?php echo round($weatherData['main']['temp']); ?>°C</p>
-                    <p><?php echo date('l, d F', $weatherData['dt']); ?></p>
-                    <p><?php echo $weatherData['name']; ?></p>
-                    <p><?php echo ucfirst($weatherData['weather'][0]['description']); ?></p>
-                </div>
-            <?php else: ?>
-                <p>No weather data available</p>
-            <?php endif; ?>
-        </div>
-
-        <!-- Carbon -->
-        <div class="card">
-            <h2>Your Carbon Footprint (CO₂)</h2>
-            <?php if ($co2Result !== null): ?>
-                <p class="co2-result"><?php echo round($co2Result, 2); ?> kg</p>
-                <p><?php echo round($co2Result, 2); ?> kg CO₂ is the same as cutting down 4–5 mature trees.</p>
-            <?php else: ?>
-                <p>No CO₂ calculation available. Check distance API response.</p>
-            <?php endif; ?>
-        </div>
-
-        <!-- Coming Soon -->
-        <div class="card">
-            <h2>Coming Soon</h2>
-            <p>This space will be used for future features!</p>
-        </div>
-
+  <div class="card schedule-card">
+    <!-- Transit Schedule NOW comes before weather -->
+    <h2>Transit Schedule</h2>
+    <?php if (!empty($routeData['transitSegments'])): ?>
+    <div class="schedule-container">
+      <h2>Transit Schedule</h2>
+      <ul>
+        <?php foreach ($routeData['transitSegments'] as $segment): ?>
+        <li>
+          <strong><?= htmlspecialchars($segment['vehicle']) ?> <?= htmlspecialchars($segment['line']) ?></strong><br>
+          From <em><?= htmlspecialchars($segment['from']) ?></em> at <strong><?= htmlspecialchars($segment['departureTime']) ?></strong><br>
+          To <em><?= htmlspecialchars($segment['to']) ?></em> at <strong><?= htmlspecialchars($segment['arrivalTime']) ?></strong><br>
+          Distance: <?= round($segment['distance'], 2) ?> km
+        </li>
+        <hr>
+        <?php endforeach; ?>
+      </ul>
     </div>
+    <?php else: ?>
+    <p>No transit available</p>
+    <?php endif; ?>
+  </div>
+
+  <div class="card weather-card">
+  <!-- Weather box moved down one spot -->
+  <h2>Weather Forecast</h2>
+  <?php if($weatherData): ?>
+  <?php 
+    $iconCode = $weatherData['weather'][0]['icon'];
+    $iconUrl = "https://openweathermap.org/img/wn/{$iconCode}@2x.png";
+  ?>
+  <div class="weather-box">
+    <img src="<?= $iconUrl ?>" alt="Weather Icon">
+    <p class="temperature"><?= round($weatherData['main']['temp']); ?>°C</p>
+    <p><?= date('l, d F', $weatherData['dt']); ?></p>
+    <p><?= $weatherData['name']; ?></p>
+    <p><?= ucfirst($weatherData['weather'][0]['description']); ?></p>
+  </div>
+  <?php else: ?>
+  <p>No weather data available</p>
+  <?php endif; ?>
+</div>
+
+
+  <div class="card carbon-card">
+    <!-- Carbon -->
+    <h2>Your Carbon Footprint (CO₂)</h2>
+    <?php if ($co2Result !== null): ?>
+    <p class="co2-result"><?= round($co2Result, 2); ?> kg</p>
+    <p><?= round($co2Result, 2); ?> kg CO₂ is the same as cutting down 4–5 mature trees.</p>
+    <?php else: ?>
+    <p>No CO₂ calculation available.</p>
+    <?php endif; ?>
+  </div>
+
+  <div class="card">
+    <!-- Coming soon -->
+    <h2>Coming Soon</h2>
+    <p>This space will be used for future features!</p>
+  </div>
+</div>
+
 </section>
+
 
 <?php if (!empty($routeData['steps'])): ?>
 <script>
@@ -205,6 +200,7 @@ function displaySteps(steps) {
         DEFAULT: "#000000"
     };
 
+    const usedModes = new Set();
     const bounds = new google.maps.LatLngBounds();
 
     steps.forEach(step => {
@@ -221,6 +217,7 @@ function displaySteps(steps) {
             }
         }
 
+        usedModes.add(mode);
         const color = colors[mode] || colors.DEFAULT;
 
         const polyline = new google.maps.Polyline({
@@ -236,92 +233,267 @@ function displaySteps(steps) {
     });
 
     map.fitBounds(bounds);
+    updateLegend(Array.from(usedModes));
 }
+function updateLegend(usedModes) {
+    const colorMap = {
+        WALK: "#6c757d",
+        BICYCLE: "#28a745",
+        DRIVE: "#007bff",
+        TRANSIT: "#ff5733",
+        BUS: "#ffc107",
+        SUBWAY: "#17a2b8",
+        TRAIN: "#8e44ad",
+        RAIL: "#8e44ad",
+        LIGHT_RAIL: "#00bcd4",
+        HEAVY_RAIL: "#5e35b1"
+    };
+
+    const legend = document.createElement('div');
+    legend.id = "dynamic-legend";
+
+    usedModes.forEach(mode => {
+        const color = colorMap[mode] || "#000000";
+        const row = document.createElement('div');
+        row.className = "legend-row";
+
+        const swatch = document.createElement('span');
+        swatch.className = "legend-color";
+        swatch.style.backgroundColor = color;
+
+        const label = document.createElement('span');
+        label.textContent = mode.replace('_', ' ');
+
+        row.appendChild(swatch);
+        row.appendChild(label);
+        legend.appendChild(row);
+    });
+
+    map.controls[google.maps.ControlPosition.RIGHT_TOP].push(legend);
+}
+
 </script>
 
 <style>
-.map-transit-container {
-    display: flex;
-    flex-direction: row; /* left to right */
-    align-items: flex-start;
-    gap: 20px;
-    flex-wrap: nowrap; /* Prevent wrap to new line */
+.weather-card {
+  background: linear-gradient(135deg, #e0f7fa, #ffffff);
 }
 
-.map-card {
-    flex: 2;
-    min-width: 400px;
+.weather-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  font-size: 16px;
+  font-weight: 500;
+  margin-top: auto;
+  padding: 10px;
+  text-align: center;
+  color: #333;
 }
 
-.schedule-card {
-    flex: 1;
-    max-width: 350px;
-    min-width: 300px;
+.weather-box img {
+  width: 80px;
+  height: 80px;
+  margin-bottom: 10px;
 }
 
-.map-transit-container .map-card {
-    flex: 2;
-    min-width: 320px;
+.weather-box .temperature {
+  font-size: 32px;
+  font-weight: bold;
+  margin: 5px 0;
+  color: #007bff;
 }
 
-.map-transit-container .schedule-card {
-    flex: 1;
-    min-width: 300px;
+.weather-box p {
+  margin: 3px 0;
+  font-size: 14px;
+}
+
+#dynamic-legend {
+  background: white;
+  border: 1px solid #ccc;
+  padding: 10px 12px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin: 10px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.15);
+}
+
+.legend-row {
+  display: flex;
+  align-items: center;
+  margin-bottom: 6px;
+}
+
+.legend-color {
+  display: inline-block;
+  width: 14px;
+  height: 14px;
+  margin-right: 8px;
+  border-radius: 3px;
+}
+
+.calculator-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1440px;
+    margin: 30px auto;
+    padding: 20px;
+    width: 95%;
+}
+
+
+
+.card {
+  background: white;
+  padding: 16px; /* reduced from 20px */
+  border-radius: 10px;
+  box-shadow: 0 3px 8px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 380px; /* reduced from 460px */
+  height: 100%;
+  box-sizing: border-box;
+  font-size: 15px;
+}
+
+.card h2 {
+  font-size: 18px;
+  margin-bottom: 10px;
+}
+
+.route-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 10px;
+  flex-grow: 1;
+  justify-content: center;
+}
+
+button {
+  padding: 10px;
+  font-size: 14px;
+}
+
+input,
+select {
+  font-size: 14px;
+  padding: 10px;
+}
+.calculator-wrapper {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 24px;
+    max-width: 1440px;
+    margin: 30px auto;
+    padding: 20px;
+    width: 95%;
+}
+
+.card {
+  background: white;
+  padding: 14px; /* reduced */
+  border-radius: 10px;
+  box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  min-height: 320px; /* tighter height */
+  font-size: 14px; /* slightly smaller font */
+}
+
+.card h2 {
+  font-size: 16px;
+  margin-bottom: 8px;
+}
+
+input, select, button {
+  font-size: 14px;
+  padding: 8px;
+}
+
+button {
+  padding: 10px;
+}
+
+.co2-result {
+  font-size: 32px;
+  margin: 16px 0 10px;
+}
+
+.weather-box p {
+  margin: 4px 0;
+  font-size: 14px;
+}
+
+
+.route-card form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin-top: 20px;
+  flex-grow: 1;
+  justify-content: center;
 }
 
 #map {
-    width: 100%;
-    height: 400px;
-    border-radius: 8px;
+  width: 100%;
+  flex-grow: 1;
+  height: 100%;
+  border-radius: 8px;
+  margin-top: 10px;
 }
 
 .schedule-container {
-    flex-grow: 1;
-    height: 100%;
-    overflow-y: auto;
+  flex-grow: 1;
+  overflow-y: auto;
+  padding: 10px;
+  font-size: 14px;
 }
 
-
 .schedule-container ul {
-    list-style: none;
-    padding: 0;
+  list-style: none;
+  padding: 0;
+  margin: 0;
 }
 
 .schedule-container li {
-    margin-bottom: 10px;
+  margin-bottom: 10px;
 }
 
-#legend {
-    position: absolute;
-    top: 10px;
-    right: 10px;
-    background: white;
-    border: 1px solid #ccc;
-    padding: 10px 15px;
-    border-radius: 8px;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    font-size: 14px;
-    z-index: 1000;
+.weather-box {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  font-size: 18px;
+  font-weight: bold;
+  margin-top: auto;
 }
 
-#legend h4 {
-    margin: 0 0 10px;
-    font-size: 16px;
+.co2-result {
+  font-size: 40px;
+  font-weight: bold;
+  color: #333;
+  margin: 20px 0 10px;
 }
 
-#legend div {
-    margin-bottom: 6px;
-    display: flex;
-    align-items: center;
+
+/* RESPONSIVE */
+@media (max-width: 1000px) {
+  .calculator-wrapper {
+    grid-template-columns: 1fr;
+  }
+
+  .card {
+    max-width: 90%;
+    margin: auto;
+  }
 }
 
-#legend span {
-    display: inline-block;
-    width: 18px;
-    height: 18px;
-    margin-right: 8px;
-    border-radius: 3px;
-}
 </style>
 
 <script async defer src="https://maps.googleapis.com/maps/api/js?key=<?php echo GOOGLE_MAPS_API_KEY; ?>&callback=initMap&libraries=places,geometry"></script>
