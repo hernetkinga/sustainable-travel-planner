@@ -25,38 +25,16 @@ class GoogleMapsAPI {
     }
 
     public static function getEcoRoute($origin, $destination, $transport = "Car") {
-        // Reset stored coordinates for each route calculation
+        // Reset stored coordinates
         self::$storedCoordinates = [];
-
-        // Always get fresh coordinates
+    
         $originCoords = self::getCoordinates($origin);
         $destinationCoords = self::getCoordinates($destination);
-        
+    
         if (!$originCoords || !$destinationCoords) {
             return ["error" => "Invalid location coordinates."];
-        } else {
-            static $storedCoordinates = [];
-
-            $originKey = is_array($origin) ? json_encode($origin) : $origin;
-            $destinationKey = is_array($destination) ? json_encode($destination) : $destination;
-            
-            if (!isset($storedCoordinates[$originKey])) {
-                $storedCoordinates[$originKey] = self::getCoordinates($origin);
-            }
-            if (!isset($storedCoordinates[$destinationKey])) {
-                $storedCoordinates[$destinationKey] = self::getCoordinates($destination);
-            }
-            
-            $origin = $storedCoordinates[$originKey];
-            $destination = $storedCoordinates[$destinationKey];
-            
-            
         }
-        
-        if (!$origin || !$destination) {
-            return ["error" => "Invalid location coordinates."];
-        }
-
+    
         $travelModes = [
             "Car" => "DRIVE",
             "Motorcycle" => "DRIVE",
@@ -67,91 +45,114 @@ class GoogleMapsAPI {
             "Light Rail" => "TRANSIT",
             "Rail" => "TRANSIT",
             "On foot" => "WALK",
-            "Bike" => "BICYCLE"
+            "Bike" => "BICYCLE",
+            "Public" => "TRANSIT"
         ];
-
+    
         $mode = $travelModes[$transport] ?? "DRIVE";
-
+    
         $postData = [
-            "origin" => ["location" => ["latLng" => ["latitude" => $origin['lat'], "longitude" => $origin['lng']]]],
-            "destination" => ["location" => ["latLng" => ["latitude" => $destination['lat'], "longitude" => $destination['lng']]]],
+            "origin" => ["location" => ["latLng" => ["latitude" => $originCoords['lat'], "longitude" => $originCoords['lng']]]],
+            "destination" => ["location" => ["latLng" => ["latitude" => $destinationCoords['lat'], "longitude" => $destinationCoords['lng']]]],
             "travelMode" => $mode,
-            "computeAlternativeRoutes" => true // Pozwala na wybór lepszej trasy
+            "computeAlternativeRoutes" => false
         ];
-        
-
-        // Add routing preference for driving
+    
         if ($mode == "DRIVE") {
             $postData["routingPreference"] = "TRAFFIC_AWARE_OPTIMAL";
         }
-
-        // Specify transit preferences for each transit mode
+    
         if ($mode == "TRANSIT") {
-            $allowedModes = [];
-            switch ($transport) {
-                case "Bus":
-                    $allowedModes = ["BUS"];
-                    break;
-                case "Train":
-                    $allowedModes = ["TRAIN"];
-                    break;
-                case "Tram":
-                    $allowedModes = ["LIGHT_RAIL"];
-                    break;
-                case "Subway":
-                    $allowedModes = ["SUBWAY"];
-                    break;
-                case "Light Rail":
-                    $allowedModes = ["LIGHT_RAIL"];
-                    break;
-                case "Rail":
-                    $allowedModes = ["RAIL"];
-                    break;
-                default:
-                    $allowedModes = ["BUS", "SUBWAY", "TRAIN", "LIGHT_RAIL", "RAIL"];
-            }
-
-            $postData["transitPreferences"] = [
-                "allowedTravelModes" => $allowedModes
-            ];
             $postData["departureTime"] = date('c'); // Required for transit
+            // Don't filter allowed travel modes — allow all (bus, subway, train, etc.)
         }
-
+    
         $headers = [
             "Content-Type: application/json",
             "X-Goog-Api-Key: " . self::$apiKey,
-            "X-Goog-FieldMask: routes.distanceMeters,routes.duration,routes.polyline"
+            "X-Goog-FieldMask: routes.distanceMeters,routes.duration,routes.polyline,routes.legs.steps"
         ];
-
+    
         $ch = curl_init();
         curl_setopt($ch, CURLOPT_URL, "https://routes.googleapis.com/directions/v2:computeRoutes");
         curl_setopt($ch, CURLOPT_POST, 1);
         curl_setopt($ch, CURLOPT_POSTFIELDS, json_encode($postData));
         curl_setopt($ch, CURLOPT_RETURNTRANSFER, true);
         curl_setopt($ch, CURLOPT_HTTPHEADER, $headers);
-
+    
         $response = curl_exec($ch);
         curl_close($ch);
-
+    
         $data = json_decode($response, true);
-
+    
         if (!isset($data['routes'][0])) {
             return [
-                "error" => "No route found for selected transport mode.",
-                "polyline" => "", // Ensure polyline is empty to avoid JavaScript errors
+                "error" => "No route found.",
+                "polyline" => "",
             ];
         }
-        
-        $polyline = isset($data['routes'][0]['polyline']['encodedPolyline']) ? 
-            $data['routes'][0]['polyline']['encodedPolyline'] : '';
-        
+    
+        $route = $data['routes'][0];
+        $steps = $route['legs'][0]['steps'] ?? [];
+        $modeDistances = [];
+        $transitSegments = [];
+
+        foreach ($steps as $step) {
+            $stepDistanceKm = ($step['distanceMeters'] ?? 0) / 1000;
+            $mode = $step['travelMode'] ?? 'UNKNOWN';
+
+            // Set readable mode
+            if ($mode === 'TRANSIT' && isset($step['transitDetails']['transitLine']['vehicle']['type'])) {
+                $vehicleType = $step['transitDetails']['transitLine']['vehicle']['type'];
+                switch ($vehicleType) {
+                    case 'BUS': $mode = 'Bus'; break;
+                    case 'SUBWAY': $mode = 'Subway'; break;
+                    case 'TRAIN': $mode = 'Train'; break;
+                    case 'LIGHT_RAIL': $mode = 'Light Rail'; break;
+                    case 'RAIL': $mode = 'Rail'; break;
+                    default: $mode = 'Transit'; break;
+                }
+
+                // Collect transit segment details
+                $transit = $step['transitDetails'];
+                $line = $transit['transitLine'];
+
+                $transitSegments[] = [
+                    'vehicle' => $line['vehicle']['type'] ?? 'TRANSIT',
+                    'line' => $line['nameShort'] ?? $line['name'] ?? 'N/A',
+                    'agency' => $line['agencies'][0]['name'] ?? '',
+                    'departureTime' => $transit['localizedValues']['departureTime']['time']['text'] ?? '',
+                    'arrivalTime' => $transit['localizedValues']['arrivalTime']['time']['text'] ?? '',
+                    'from' => $transit['stopDetails']['departureStop']['name'] ?? '',
+                    'to' => $transit['stopDetails']['arrivalStop']['name'] ?? '',
+                    'distance' => $stepDistanceKm
+                ];
+            } elseif ($mode === 'WALK') {
+                $mode = 'On foot';
+            } elseif ($mode === 'BICYCLE') {
+                $mode = 'Bike';
+            } elseif ($mode === 'DRIVE') {
+                $mode = 'Car';
+            }
+
+            if (!isset($modeDistances[$mode])) {
+                $modeDistances[$mode] = 0;
+            }
+
+            $modeDistances[$mode] += $stepDistanceKm;
+        }
+
+    
         return [
-            "distance" => $data['routes'][0]['distanceMeters'] / 1000, // Convert meters to km
-            "duration" => $data['routes'][0]['duration'] ?? "Unknown",
-            "polyline" => $polyline, // Store polyline
-            "steps" => $data['routes'][0]['legs'][0]['steps'] ?? []
+            "totalDistance" => $route['distanceMeters'] / 1000,
+            "duration" => $route['duration'] ?? "Unknown",
+            "polyline" => $route['polyline']['encodedPolyline'] ?? '',
+            "steps" => $steps,
+            "modeDistances" => $modeDistances,
+            "transitSegments" => $transitSegments
         ];
         
     }
+    
 }
 ?>

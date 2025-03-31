@@ -10,20 +10,22 @@ $distance = null;
 $weatherData = null;
 $origin = '';
 $destination = '';
-$transport = isset($_POST['transport']) ? $_POST['transport'] : 'Car'; // Keep transport selection
+$transport = isset($_POST['transport']) ? $_POST['transport'] : 'Car';
 $routeData = []; 
-$polyline = ''; // Default empty polyline
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $origin = trim($_POST['origin']);
     $destination = trim($_POST['destination']);
 
     if (!empty($origin) && !empty($destination)) {
-        $routeData = GoogleMapsAPI::getEcoRoute($origin, $destination, $transport); // Pass transport
-        if (!empty($routeData['distance'])) {
-            $distance = $routeData['distance'];
-            $co2Result = CarbonCalculator::calculate($distance, $transport);
-            $polyline = $routeData['polyline'];  // Store polyline
+        $routeData = GoogleMapsAPI::getEcoRoute($origin, $destination, $transport);
+        if (!empty($routeData['modeDistances'])) {
+            $co2Result = 0;
+            $distance = 0;
+            foreach ($routeData['modeDistances'] as $mode => $dist) {
+                $distance += $dist;
+                $co2Result += CarbonCalculator::calculate($dist, $mode);
+            }
         }
 
         $weatherData = WeatherAPI::getWeather($destination);
@@ -33,18 +35,18 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
 <section class="calculator">
     <div class="calculator-grid">
+
+        <!-- Row 1: Top 3 Boxes -->
         <div class="card">
             <h2>Choose Your Route</h2>
             <form method="post" action="calculator.php">
                 <input type="text" id="origin" name="origin" value="<?php echo htmlspecialchars($origin); ?>" placeholder="Enter your starting point" required>
                 <input type="text" id="destination" name="destination" value="<?php echo htmlspecialchars($destination); ?>" placeholder="Enter your destination" required>
 
-                <select id="transport" name="transport" required onchange="updateRoute()">
+                <select id="transport" name="transport" required>
                     <option value="Car" <?= ($transport == 'Car') ? 'selected' : '' ?>>Car</option>
                     <option value="Motorcycle" <?= ($transport == 'Motorcycle') ? 'selected' : '' ?>>Motorcycle</option>
-                    <option value="Bus" <?= ($transport == 'Bus') ? 'selected' : '' ?>>Bus</option>
-                    <option value="Train" <?= ($transport == 'Train') ? 'selected' : '' ?>>Train</option>
-                    <option value="Tram" <?= ($transport == 'Tram') ? 'selected' : '' ?>>Tram</option>
+                    <option value="Public" <?= ($transport == 'Public') ? 'selected' : '' ?>>Public Transport (Mixed)</option>
                     <option value="On foot" <?= ($transport == 'On foot') ? 'selected' : '' ?>>On foot</option>
                     <option value="Bike" <?= ($transport == 'Bike') ? 'selected' : '' ?>>Bike</option>
                 </select>
@@ -58,6 +60,38 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <div id="map"></div>
         </div>
 
+        <div class="card">
+            <?php if ($transport === 'Public'): ?>
+            <div id="legend">
+                <h4>Transport Legend</h4>
+                <div><span style="background-color: #ffc107"></span> Bus</div>
+                <div><span style="background-color: #17a2b8"></span> Subway</div>
+                <div><span style="background-color: #8e44ad"></span> Train / Rail</div>
+                <div><span style="background-color: #00bcd4"></span> Light Rail</div>
+                <div><span style="background-color: #5e35b1"></span> Heavy Rail</div>
+                <div><span style="background-color: #6c757d"></span> On foot</div>
+            </div>
+            <?php endif; ?>
+
+            <?php if (!empty($routeData['transitSegments'])): ?>
+            <div class="schedule-container">
+                <h2>Transit Schedule</h2>
+                <ul>
+                    <?php foreach ($routeData['transitSegments'] as $segment): ?>
+                        <li>
+                            <strong><?= htmlspecialchars($segment['vehicle']) ?> <?= htmlspecialchars($segment['line']) ?></strong><br>
+                            From <em><?= htmlspecialchars($segment['from']) ?></em> at <strong><?= htmlspecialchars($segment['departureTime']) ?></strong><br>
+                            To <em><?= htmlspecialchars($segment['to']) ?></em> at <strong><?= htmlspecialchars($segment['arrivalTime']) ?></strong><br>
+                            Distance: <?= round($segment['distance'], 2) ?> km
+                        </li>
+                        <hr>
+                    <?php endforeach; ?>
+                </ul>
+            </div>
+            <?php endif; ?>
+        </div>
+
+        <!-- Row 2: Bottom 3 Boxes -->
         <div class="card">
             <h2>Weather Forecast</h2>
             <?php if($weatherData): ?>
@@ -79,105 +113,191 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
                 <p><?php echo round($co2Result, 2); ?> kg CO₂ is the same as cutting down 4–5 mature trees.</p>
             <?php else: ?>
                 <p>No CO₂ calculation available. Check distance API response.</p>
-                <pre><?php print_r($routeData); ?></pre> <?php endif; ?>
+            <?php endif; ?>
         </div>
+
+        <div class="card">
+            <h2>Coming Soon</h2>
+            <p>This space will be used for future features!</p>
+        </div>
+
     </div>
 </section>
 
+
+<?php if (!empty($routeData['steps'])): ?>
+<script>
+const routeSteps = <?php echo json_encode($routeData['steps']); ?>;
+const useSteps = true;
+</script>
+<?php elseif (!empty($routeData['polyline'])): ?>
+<script>
+const routePolyline = "<?php echo $routeData['polyline']; ?>";
+const useSteps = false;
+</script>
+<?php endif; ?>
+
 <script>
 let map;
-let directionsService;
-let directionsRenderer;
-let autocompleteOrigin;
-let autocompleteDestination;
 
 function initMap() {
-    console.log("Initializing map...");
     map = new google.maps.Map(document.getElementById("map"), {
-        center: { lat: 52.2298, lng: 21.0122 }, // Default Warsaw
+        center: { lat: 52.2298, lng: 21.0122 },
         zoom: 6,
     });
 
-    directionsService = new google.maps.DirectionsService();
-    directionsRenderer = new google.maps.DirectionsRenderer({ map: map });
+    const originInput = document.getElementById("origin");
+    const destinationInput = document.getElementById("destination");
 
-    // Enable Google Places Autocomplete for Origin and Destination
-    autocompleteOrigin = new google.maps.places.Autocomplete(document.getElementById("origin"));
-    autocompleteDestination = new google.maps.places.Autocomplete(document.getElementById("destination"));
+    const autocompleteOrigin = new google.maps.places.Autocomplete(originInput);
+    const autocompleteDestination = new google.maps.places.Autocomplete(destinationInput);
 
-    // Restrict search to a country (Optional - You can remove this line)
     autocompleteOrigin.setComponentRestrictions({ country: "PL" });
     autocompleteDestination.setComponentRestrictions({ country: "PL" });
 
-    // Ensure we use precise place details
     autocompleteOrigin.setFields(["geometry", "formatted_address"]);
     autocompleteDestination.setFields(["geometry", "formatted_address"]);
 
-    autocompleteOrigin.addListener("place_changed", function () {
-        let place = autocompleteOrigin.getPlace();
-        if (!place.geometry) {
-            console.warn("No details available for input: '" + place.name + "'");
+    if (typeof useSteps !== 'undefined') {
+        if (useSteps) {
+            displaySteps(routeSteps);
+        } else {
+            displayPolyline(routePolyline);
         }
-    });
-
-    autocompleteDestination.addListener("place_changed", function () {
-        let place = autocompleteDestination.getPlace();
-        if (!place.geometry) {
-            console.warn("No details available for input: '" + place.name + "'");
-        }
-    });
-
-    <?php if (!empty($polyline)): ?>
-        displayPolyline('<?php echo $polyline; ?>');
-    <?php endif; ?>
+    }
 }
 
 function displayPolyline(encodedPolyline) {
-    if (!encodedPolyline || encodedPolyline.length === 0) {
-        console.warn("No polyline available for this route.");
-        return;
-    }
+    if (!encodedPolyline || encodedPolyline.length === 0) return;
 
-    console.log("Received polyline:", encodedPolyline);
+    const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
 
-    try {
-        const decodedPath = google.maps.geometry.encoding.decodePath(encodedPolyline);
-        console.log("Decoded path:", decodedPath);
+    const polyline = new google.maps.Polyline({
+        path: decodedPath,
+        geodesic: true,
+        strokeColor: "#007bff",
+        strokeOpacity: 1.0,
+        strokeWeight: 5
+    });
+
+    polyline.setMap(map);
+
+    const bounds = new google.maps.LatLngBounds();
+    decodedPath.forEach(latLng => bounds.extend(latLng));
+    map.fitBounds(bounds);
+}
+
+function displaySteps(steps) {
+    const colors = {
+        WALK: "#6c757d",
+        BICYCLE: "#28a745",
+        DRIVE: "#007bff",
+        TRANSIT: "#ff5733",
+        BUS: "#ffc107",
+        SUBWAY: "#17a2b8",
+        TRAIN: "#8e44ad",
+        RAIL: "#8e44ad",
+        LIGHT_RAIL: "#00bcd4",
+        HEAVY_RAIL: "#5e35b1",
+        DEFAULT: "#000000"
+    };
+
+    const bounds = new google.maps.LatLngBounds();
+
+    steps.forEach(step => {
+        const encoded = step.polyline?.encodedPolyline;
+        if (!encoded) return;
+
+        const path = google.maps.geometry.encoding.decodePath(encoded);
+        let mode = step.travelMode;
+
+        if (mode === "TRANSIT" && step.transitDetails) {
+            const type = step.transitDetails.transitLine?.vehicle?.type;
+            if (type && colors[type]) {
+                mode = type;
+            }
+        }
+
+        const color = colors[mode] || colors.DEFAULT;
 
         const polyline = new google.maps.Polyline({
-            path: decodedPath,
+            path: path,
             geodesic: true,
-            strokeColor: '#FF0000',
+            strokeColor: color,
             strokeOpacity: 1.0,
             strokeWeight: 5
         });
 
         polyline.setMap(map);
+        path.forEach(p => bounds.extend(p));
+    });
 
-        const bounds = new google.maps.LatLngBounds();
-        decodedPath.forEach(latLng => bounds.extend(latLng));
-        map.fitBounds(bounds);
-    } catch (error) {
-        console.error("Error decoding polyline:", error);
-    }
+    map.fitBounds(bounds);
 }
-
-
-// Display warning for certain modes
-function showWarning(transport) {
-    let warningMessage = "";
-
-    if (transport === "Bike" || transport === "On foot" || transport === "Motorcycle") {
-        warningMessage = "⚠️ Walking, bicycling, and two-wheel routes are in beta and might sometimes be missing clear sidewalks, pedestrian paths, or bicycling paths.";
-    }
-
-    document.getElementById("transport-warning").innerHTML = warningMessage;
-}
-
 </script>
 
-<!-- Ensure Google Places API is enabled in the Maps API key -->
-<script async defer src="https://maps.googleapis.com/maps/api/js?key=<?php echo GOOGLE_MAPS_API_KEY; ?>&callback=initMap&libraries=places,geometry"></script>
+<style>
+.map-schedule-row {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+}
+.map-container {
+    flex: 2;
+    position: relative;
+}
+#map {
+    width: 100%;
+    height: 400px;
+    border-radius: 8px;
+}
+.schedule-container {
+    flex: 1;
+    padding: 10px;
+    background: #ffffff;
+    border: 1px solid #ddd;
+    border-radius: 8px;
+    font-size: 14px;
+    overflow-y: auto;
+    max-height: 400px;
+}
+.schedule-container ul {
+    list-style: none;
+    padding: 0;
+}
+.schedule-container li {
+    margin-bottom: 10px;
+}
+#legend {
+    position: absolute;
+    top: 10px;
+    right: 10px;
+    background: white;
+    border: 1px solid #ccc;
+    padding: 10px 15px;
+    border-radius: 8px;
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+    font-size: 14px;
+    z-index: 1000;
+}
+#legend h4 {
+    margin: 0 0 10px;
+    font-size: 16px;
+}
+#legend div {
+    margin-bottom: 6px;
+    display: flex;
+    align-items: center;
+}
+#legend span {
+    display: inline-block;
+    width: 18px;
+    height: 18px;
+    margin-right: 8px;
+    border-radius: 3px;
+}
+</style>
 
+<script async defer src="https://maps.googleapis.com/maps/api/js?key=<?php echo GOOGLE_MAPS_API_KEY; ?>&callback=initMap&libraries=places,geometry"></script>
 
 <?php include 'includes/footer.php'; ?>
