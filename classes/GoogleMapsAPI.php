@@ -1,10 +1,15 @@
 <?php
 class GoogleMapsAPI {
     private static $apiKey = GOOGLE_MAPS_API_KEY;
+    private static $storedCoordinates = []; // Make this a static property
 
     public static function getCoordinates($address) {
-        $apiKey = self::$apiKey;
-        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($address) . "&key=" . $apiKey;
+        // Check if coordinates for this address are already cached
+        if (isset(self::$storedCoordinates[$address])) {
+            return self::$storedCoordinates[$address];
+        }
+
+        $url = "https://maps.googleapis.com/maps/api/geocode/json?address=" . urlencode($address) . "&key=" . self::$apiKey;
     
         $response = file_get_contents($url);
         $data = json_decode($response, true);
@@ -12,14 +17,23 @@ class GoogleMapsAPI {
         if (!isset($data['results'][0]['geometry']['location'])) {
             return null;
         }
+
+        // Cache the coordinates
+        self::$storedCoordinates[$address] = $data['results'][0]['geometry']['location'];
     
         return $data['results'][0]['geometry']['location'];
     }
 
     public static function getEcoRoute($origin, $destination, $transport = "Car") {
-        if (isset($_POST['origin_lat']) && isset($_POST['origin_lng']) && isset($_POST['destination_lat']) && isset($_POST['destination_lng'])) {
-            $origin = ['lat' => $_POST['origin_lat'], 'lng' => $_POST['origin_lng']];
-            $destination = ['lat' => $_POST['destination_lat'], 'lng' => $_POST['destination_lng']];
+        // Reset stored coordinates for each route calculation
+        self::$storedCoordinates = [];
+
+        // Always get fresh coordinates
+        $originCoords = self::getCoordinates($origin);
+        $destinationCoords = self::getCoordinates($destination);
+        
+        if (!$originCoords || !$destinationCoords) {
+            return ["error" => "Invalid location coordinates."];
         } else {
             static $storedCoordinates = [];
 
@@ -45,7 +59,7 @@ class GoogleMapsAPI {
 
         $travelModes = [
             "Car" => "DRIVE",
-            "Motorcycle" => "TWO_WHEELER",
+            "Motorcycle" => "DRIVE",
             "Bus" => "TRANSIT",
             "Train" => "TRANSIT",
             "Tram" => "TRANSIT",
