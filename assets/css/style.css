@@ -352,3 +352,53 @@ ul li {
         font-size: 16px;
     }
 }
+.carbon-card {
+    background: linear-gradient(135deg, #f0fff4, #ffffff);
+    position: relative;
+    text-align: center;
+  }
+  
+  .carbon-box {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    flex-grow: 1;
+    text-align: center;
+  }
+  
+  .co2-result {
+    font-size: 42px;
+    font-weight: bold;
+    color: #333;
+    margin: 0 auto 10px;
+  }
+  
+  .co2-sub {
+    margin-bottom: 15px;
+    font-size: 14px;
+    color: #666;
+  }
+  
+  .carbon-list {
+    padding: 0;
+    list-style: none;
+    margin: 0 auto;
+    font-size: 14px;
+    color: #333;
+    text-align: center;
+  }
+  
+  .carbon-list li {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+  }
+  
+  
+  .carbon-list li strong {
+    color: #000;
+    margin-left: 4px;
+  }
+  

@@ -18,4 +18,4 @@
             <li>📲 Access features like offline planning and real-time updates</li>
         </ul>
 
-        <p class="fun-fact"><strong>Fun Fact:</strong> Traveling by train emits up to <strong>90% less CO₂</strong
+        <p class="fun-fact"><strong>Interesting Fact:</strong> If just 1 in 10 people swapped one short car trip a week for walking or biking, we’d cut emissions equal to taking 1 million cars off the road each year.</strong

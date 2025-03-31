@@ -13,6 +13,8 @@ $destination = '';
 $transport = isset($_POST['transport']) ? $_POST['transport'] : 'Car';
 $routeData = []; 
 
+
+
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $origin = trim($_POST['origin']);
     $destination = trim($_POST['destination']);
@@ -63,7 +65,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     <h2>Transit Schedule</h2>
     <?php if (!empty($routeData['transitSegments'])): ?>
     <div class="schedule-container">
-      <h2>Transit Schedule</h2>
       <ul>
         <?php foreach ($routeData['transitSegments'] as $segment): ?>
         <li>
@@ -77,7 +78,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
       </ul>
     </div>
     <?php else: ?>
-    <p>No transit available</p>
+    <p>No transit available.</p>
     <?php endif; ?>
   </div>
 
@@ -102,22 +103,59 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 </div>
 
 
-  <div class="card carbon-card">
-    <!-- Carbon -->
-    <h2>Your Carbon Footprint (CO₂)</h2>
-    <?php if ($co2Result !== null): ?>
-    <p class="co2-result"><?= round($co2Result, 2); ?> kg</p>
-    <p><?= round($co2Result, 2); ?> kg CO₂ is the same as cutting down 4–5 mature trees.</p>
-    <?php else: ?>
+<div class="card carbon-card">
+  <h2>Your Carbon Footprint (CO₂)</h2>
+  <?php if ($co2Result !== null): ?>
+    <?php
+      $co2PerKWh = 0.475;
+      $laptopWattage = 50;
+      $laptopKWh = $laptopWattage / 1000;
+      $laptopHours = round(($co2Result / $co2PerKWh) / $laptopKWh);
+    ?>
+    <div class="carbon-box">
+      <p class="co2-result"><?= round($co2Result, 2); ?> kg</p>
+      <p class="co2-sub">CO₂ emitted for this journey</p>
+      <ul class="carbon-list">
+        <li>💻 <span>Same as using a laptop for <strong><?= $laptopHours ?> hours</strong></span></li>
+      </ul>
+    </div>
+  <?php else: ?>
     <p>No CO₂ calculation available.</p>
-    <?php endif; ?>
-  </div>
+  <?php endif; ?>
+</div>
 
-  <div class="card">
-    <!-- Coming soon -->
-    <h2>Coming Soon</h2>
-    <p>This space will be used for future features!</p>
-  </div>
+
+    <?php
+    $tips = [
+        "🧃 Bring a reusable water bottle or coffee cup — you'll reduce plastic waste *and* the emissions from production.",
+        "🚶 Walk or bike for trips under 2 km — it's often faster than driving in cities and has zero emissions.",
+        "👜 Keep a foldable bag in your backpack or coat — skipping a plastic bag saves ~0.1 kg CO₂ each time.",
+        "🚌 Take the bus for your work commute once a week — even just one day cuts emissions by up to 20%.",
+        "🌱 Eat one plant-based meal per day — it can cut your food-related carbon footprint by 25–30%.",
+        "🔌 Unplug phone/laptop chargers when not in use — they still draw 'phantom power' and waste energy.",
+        "📦 Consolidate online shopping deliveries — fewer shipments means fewer vans and less CO₂.",
+        "👕 Wash clothes with cold water and air dry — this saves energy and extends clothing life.",
+        "💡 Switch to LED bulbs — they use up to 85% less energy and last longer.",
+        "🍽️ Plan your meals to avoid food waste — the average household throws away 30% of food!",
+        "📧 Clean up old emails & cloud files — digital storage requires energy 24/7.",
+    ];
+    
+
+    // Select one random tip
+    $selectedTips = array_rand($tips, 3); // Get 3 random keys
+
+    ?>
+
+    <div class="card">
+    <h2>Carbon-Saving Tips </h2>
+    <ul class="tips-list">
+        <?php foreach ($selectedTips as $key): ?>
+        <li><?= htmlspecialchars($tips[$key]); ?></li>
+        <?php endforeach; ?>
+    </ul>
+    </div>
+
+
 </div>
 
 </section>
@@ -297,6 +335,68 @@ function updateLegend(usedModes) {
   height: 80px;
   margin-bottom: 10px;
 }
+
+.tips-list {
+  list-style: none;
+  padding-left: 0;
+  margin-top: 12px;
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.tips-list li {
+  background: #f6fdf7;
+  border: 1px solid #e1efe2;
+  padding: 12px 16px;
+  border-radius: 10px;
+  font-size: 15px;
+  line-height: 1.5;
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  box-shadow: 0 2px 6px rgba(0,0,0,0.03);
+}
+
+.tips-list li::before {
+  font-size: 16px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+
+.daily-tip {
+  background: #e9fce9;
+  border-left: 5px solid #28a745;
+  padding: 16px;
+  border-radius: 10px;
+  font-size: 15px;
+  color: #2e5939;
+  font-weight: 500;
+  box-shadow: 0 2px 5px rgba(0, 0, 0, 0.05);
+  position: relative;
+  margin-top: 12px;
+  line-height: 1.5;
+}
+
+.daily-tip::before {
+  content: "🌱";
+  font-size: 20px;
+  position: absolute;
+  top: 16px;
+  left: 12px;
+}
+
+.card h2 {
+  font-size: 16px;
+  margin-bottom: 12px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+
 
 .weather-box .temperature {
   font-size: 32px;

@@ -110,6 +110,7 @@ class GoogleMapsAPI {
                     case 'TRAIN': $mode = 'Train'; break;
                     case 'LIGHT_RAIL': $mode = 'Light Rail'; break;
                     case 'RAIL': $mode = 'Rail'; break;
+                    case 'TRAM': $mode = 'Tram'; break;
                     default: $mode = 'Transit'; break;
                 }
 
