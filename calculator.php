@@ -13,6 +13,25 @@ $destination = '';
 $transport = isset($_POST['transport']) ? $_POST['transport'] : 'Car';
 $routeData = []; 
 
+function normalizeMode($mode) {
+    $map = [
+        'DRIVE' => 'Car',
+        'CAR' => 'Car',
+        'MOTORCYCLE' => 'Motorcycle',
+        'TRANSIT' => 'Public',
+        'BUS' => 'Bus',
+        'TRAIN' => 'Train',
+        'TRAM' => 'Tram',
+        'SUBWAY' => 'Train',
+        'RAIL' => 'Train',
+        'LIGHT_RAIL' => 'Train',
+        'HEAVY_RAIL' => 'Train',
+        'WALK' => 'On foot',
+        'BICYCLE' => 'Bike',
+        'BIKE' => 'Bike'
+    ];
+    return $map[strtoupper($mode)] ?? 'Car'; // fallback to 'Car' just in case
+}
 
 
 if ($_SERVER['REQUEST_METHOD'] == 'POST') {
@@ -23,12 +42,24 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         $routeData = GoogleMapsAPI::getEcoRoute($origin, $destination, $transport);
         if (!empty($routeData['modeDistances'])) {
             $co2Result = 0;
-            $distance = 0;
-            foreach ($routeData['modeDistances'] as $mode => $dist) {
-                $distance += $dist;
-                $co2Result += CarbonCalculator::calculate($dist, $mode);
+            $distance = array_sum($routeData['modeDistances']);
+        
+            if ($transport === 'On foot' || $transport === 'Bike') {
+                $co2Result = 0;
+            } else {
+                foreach ($routeData['modeDistances'] as $mode => $dist) {
+                    $normalizedMode = normalizeMode($mode);
+        
+                    // If it's a single-mode trip (like WALK only), trust the user's selection
+                    if (count($routeData['modeDistances']) === 1) {
+                        $normalizedMode = normalizeMode($transport);
+                    }
+        
+                    $co2Result += CarbonCalculator::calculate($dist, $normalizedMode);
+                }
             }
         }
+        
 
         $weatherData = WeatherAPI::getWeather($destination);
     }
