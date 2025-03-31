@@ -36,7 +36,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 <section class="calculator">
     <div class="calculator-grid">
 
-        <!-- Row 1: Top 3 Boxes -->
+        <!-- Route Form -->
         <div class="card">
             <h2>Choose Your Route</h2>
             <form method="post" action="calculator.php">
@@ -55,43 +55,45 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             </form>
         </div>
 
-        <div class="card">
-            <h2>Your Route on Maps</h2>
-            <div id="map"></div>
+        <!-- Map + Transit Schedule Side by Side -->
+        <div class="map-transit-container">
+            <div class="card map-card">
+                <h2>Your Route on Maps</h2>
+                <div id="map"></div>
+                <?php if ($transport === 'Public'): ?>
+                <div id="legend">
+                    <h4>Transport Legend</h4>
+                    <div><span style="background-color: #ffc107"></span> Bus</div>
+                    <div><span style="background-color: #17a2b8"></span> Subway</div>
+                    <div><span style="background-color: #8e44ad"></span> Train / Rail</div>
+                    <div><span style="background-color: #00bcd4"></span> Light Rail</div>
+                    <div><span style="background-color: #5e35b1"></span> Heavy Rail</div>
+                    <div><span style="background-color: #6c757d"></span> On foot</div>
+                </div>
+                <?php endif; ?>
+            </div>
+
+            <div class="card schedule-card">
+                <?php if (!empty($routeData['transitSegments'])): ?>
+                <div class="schedule-container">
+                    <h2>Transit Schedule</h2>
+                    <ul>
+                        <?php foreach ($routeData['transitSegments'] as $segment): ?>
+                            <li>
+                                <strong><?= htmlspecialchars($segment['vehicle']) ?> <?= htmlspecialchars($segment['line']) ?></strong><br>
+                                From <em><?= htmlspecialchars($segment['from']) ?></em> at <strong><?= htmlspecialchars($segment['departureTime']) ?></strong><br>
+                                To <em><?= htmlspecialchars($segment['to']) ?></em> at <strong><?= htmlspecialchars($segment['arrivalTime']) ?></strong><br>
+                                Distance: <?= round($segment['distance'], 2) ?> km
+                            </li>
+                            <hr>
+                        <?php endforeach; ?>
+                    </ul>
+                </div>
+                <?php endif; ?>
+            </div>
         </div>
 
-        <div class="card">
-            <?php if ($transport === 'Public'): ?>
-            <div id="legend">
-                <h4>Transport Legend</h4>
-                <div><span style="background-color: #ffc107"></span> Bus</div>
-                <div><span style="background-color: #17a2b8"></span> Subway</div>
-                <div><span style="background-color: #8e44ad"></span> Train / Rail</div>
-                <div><span style="background-color: #00bcd4"></span> Light Rail</div>
-                <div><span style="background-color: #5e35b1"></span> Heavy Rail</div>
-                <div><span style="background-color: #6c757d"></span> On foot</div>
-            </div>
-            <?php endif; ?>
-
-            <?php if (!empty($routeData['transitSegments'])): ?>
-            <div class="schedule-container">
-                <h2>Transit Schedule</h2>
-                <ul>
-                    <?php foreach ($routeData['transitSegments'] as $segment): ?>
-                        <li>
-                            <strong><?= htmlspecialchars($segment['vehicle']) ?> <?= htmlspecialchars($segment['line']) ?></strong><br>
-                            From <em><?= htmlspecialchars($segment['from']) ?></em> at <strong><?= htmlspecialchars($segment['departureTime']) ?></strong><br>
-                            To <em><?= htmlspecialchars($segment['to']) ?></em> at <strong><?= htmlspecialchars($segment['arrivalTime']) ?></strong><br>
-                            Distance: <?= round($segment['distance'], 2) ?> km
-                        </li>
-                        <hr>
-                    <?php endforeach; ?>
-                </ul>
-            </div>
-            <?php endif; ?>
-        </div>
-
-        <!-- Row 2: Bottom 3 Boxes -->
+        <!-- Weather -->
         <div class="card">
             <h2>Weather Forecast</h2>
             <?php if($weatherData): ?>
@@ -106,6 +108,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <?php endif; ?>
         </div>
 
+        <!-- Carbon -->
         <div class="card">
             <h2>Your Carbon Footprint (CO₂)</h2>
             <?php if ($co2Result !== null): ?>
@@ -116,6 +119,7 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
             <?php endif; ?>
         </div>
 
+        <!-- Coming Soon -->
         <div class="card">
             <h2>Coming Soon</h2>
             <p>This space will be used for future features!</p>
@@ -123,7 +127,6 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
 
     </div>
 </section>
-
 
 <?php if (!empty($routeData['steps'])): ?>
 <script>
@@ -237,37 +240,57 @@ function displaySteps(steps) {
 </script>
 
 <style>
-.map-schedule-row {
+.map-transit-container {
     display: flex;
+    flex-direction: row; /* left to right */
+    align-items: flex-start;
     gap: 20px;
-    flex-wrap: wrap;
+    flex-wrap: nowrap; /* Prevent wrap to new line */
 }
-.map-container {
+
+.map-card {
     flex: 2;
-    position: relative;
+    min-width: 400px;
 }
+
+.schedule-card {
+    flex: 1;
+    max-width: 350px;
+    min-width: 300px;
+}
+
+.map-transit-container .map-card {
+    flex: 2;
+    min-width: 320px;
+}
+
+.map-transit-container .schedule-card {
+    flex: 1;
+    min-width: 300px;
+}
+
 #map {
     width: 100%;
     height: 400px;
     border-radius: 8px;
 }
+
 .schedule-container {
-    flex: 1;
-    padding: 10px;
-    background: #ffffff;
-    border: 1px solid #ddd;
-    border-radius: 8px;
-    font-size: 14px;
+    flex-grow: 1;
+    height: 100%;
     overflow-y: auto;
-    max-height: 400px;
 }
+
+
 .schedule-container ul {
     list-style: none;
     padding: 0;
 }
+
 .schedule-container li {
     margin-bottom: 10px;
 }
+
 #legend {
     position: absolute;
     top: 10px;
@@ -280,15 +303,18 @@ function displaySteps(steps) {
     font-size: 14px;
     z-index: 1000;
 }
+
 #legend h4 {
     margin: 0 0 10px;
     font-size: 16px;
 }
+
 #legend div {
     margin-bottom: 6px;
     display: flex;
     align-items: center;
 }
+
 #legend span {
     display: inline-block;
     width: 18px;
