@@ -1,9 +1,11 @@
 <?php 
-include 'includes/header.php'; 
-include 'config/config.php';
-include 'classes/CarbonCalculator.php';
-include 'classes/GoogleMapsAPI.php';
-include 'classes/WeatherAPI.php';
+
+require_once __DIR__ . '/vendor/autoload.php'; // ← important if not already included
+require_once __DIR__ . '/config/config.php'; // <-- must come before you use the API keys
+include __DIR__ . '/includes/header.php'; // 👈 TO JEST WAŻNE
+use App\Classes\GoogleMapsAPI;
+use App\Classes\CarbonCalculator;
+use App\Classes\WeatherAPI;
 
 $co2Result = null;
 $distance = null;
@@ -12,6 +14,7 @@ $origin = '';
 $destination = '';
 $transport = isset($_POST['transport']) ? $_POST['transport'] : 'Car';
 $routeData = []; 
+$maps = new GoogleMapsAPI(GOOGLE_MAPS_API_KEY);
 
 function normalizeMode($mode) {
     $map = [
@@ -39,7 +42,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
     $destination = trim($_POST['destination']);
 
     if (!empty($origin) && !empty($destination)) {
-        $routeData = GoogleMapsAPI::getEcoRoute($origin, $destination, $transport);
+      $maps = new GoogleMapsAPI();
+      $routeData = $maps->getEcoRoute($origin, $destination, $transport);
+      
         if (!empty($routeData['modeDistances'])) {
             $co2Result = 0;
             $distance = array_sum($routeData['modeDistances']);
@@ -61,7 +66,9 @@ if ($_SERVER['REQUEST_METHOD'] == 'POST') {
         }
         
 
-        $weatherData = WeatherAPI::getWeather($destination);
+        $weather = new WeatherAPI($maps); // inject the same instance of GoogleMapsAPI
+        $weatherData = $weather->getWeather($destination);
+        
     }
 }
 ?>

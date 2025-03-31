@@ -1,0 +1,33 @@
+# === PHP-specific ignores ===
+*.log
+*.cache
+*.tmp
+*.swp
+
+# === Composer dependencies ===
+/vendor/
+
+# === PHPUnit coverage reports ===
+/coverage/
+
+# === Ignore environment/config files if sensitive ===
+.env
+config/config.php
+
+# === Ignore IDE/project files ===
+.vscode/
+.idea/
+*.sublime-project
+*.sublime-workspace
+
+# === OS-generated files ===
+.DS_Store
+Thumbs.db
+
+# === Node/npm-related (if any frontend tooling involved) ===
+node_modules/
+package-lock.json
+npm-debug.log
+
+# === Misc ===
+/*.bak

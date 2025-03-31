@@ -1,28 +1,32 @@
 <?php
-class WeatherAPI {
-    public static function getWeather($location) {
-        $apiKey = WEATHER_API_KEY;
+namespace App\Classes;
 
-        // Get coordinates from Google Maps API
-        $coordinates = GoogleMapsAPI::getCoordinates($location);
+class WeatherAPI {
+    private $apiKey;
+    private $geoService;
+    
+
+    public function __construct($geoService = null, $apiKey = null) {
+        $this->geoService = $geoService ?? new GoogleMapsAPI();
+        $this->apiKey = $apiKey ?? WEATHER_API_KEY;
+    }
+
+    public function getWeather($location) {
+        $coordinates = $this->geoService->getCoordinates($location);
         if (!$coordinates) {
-            return null; // Fail gracefully if geocoding fails
+            return null;
         }
 
         $lat = $coordinates['lat'];
         $lng = $coordinates['lng'];
 
-        // Use coordinates to get weather data
-        $url = "https://api.openweathermap.org/data/2.5/weather?lat={$lat}&lon={$lng}&units=metric&appid=" . $apiKey;
-
-        $response = @file_get_contents($url); // Suppress warnings
-        if ($response === FALSE) {
+        $url = "https://api.openweathermap.org/data/2.5/weather?lat={$lat}&lon={$lng}&units=metric&appid=" . $this->apiKey;
+        $response = @file_get_contents($url);
+        if ($response === false) {
             return null;
         }
 
         $data = json_decode($response, true);
-
-        // Check if the API returned an error
         if (!isset($data['cod']) || $data['cod'] != 200) {
             return null;
         }
@@ -30,4 +34,3 @@ class WeatherAPI {
         return $data;
     }
 }
-?>

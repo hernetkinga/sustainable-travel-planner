@@ -1,0 +1,17 @@
+<phpunit bootstrap="vendor/autoload.php"
+         colors="true"
+         verbose="true"
+         stopOnFailure="false">
+
+    <coverage processUncoveredFiles="true">
+        <include>
+            <directory suffix=".php">classes</directory>
+        </include>
+    </coverage>
+
+    <testsuites>
+        <testsuite name="App Test Suite">
+            <directory>tests</directory>
+        </testsuite>
+    </testsuites>
+</phpunit>

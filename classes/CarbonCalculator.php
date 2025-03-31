@@ -1,4 +1,7 @@
 <?php
+namespace App\Classes;
+require_once __DIR__ . '/../vendor/autoload.php';
+
 class CarbonCalculator {
 
     // Współczynniki emisji (kg CO2/km) dla poszczególnych środków transportu
