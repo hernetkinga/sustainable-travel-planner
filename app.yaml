@@ -1,0 +1,10 @@
+runtime: php74
+
+env_variables:
+  DB_HOST: 127.0.0.1
+  DB_USER: root
+  DB_PASSWORD: kingahernet
+  DB_NAME: database-sustainable-travel-planner
+
+beta_settings:
+  cloud_sql_instances: sixth-spot-454018-t9:europe-central2:database-sustainable-travel-planner
