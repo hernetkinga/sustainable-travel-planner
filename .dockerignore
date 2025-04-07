@@ -1,0 +1,10 @@
+vendor/
+.dockerignore
+.gcloudignore
+.gitignore
+.git/
+tests/
+coverage/
+selenium-tests/
+.phpunit.result.cache
+README.md
