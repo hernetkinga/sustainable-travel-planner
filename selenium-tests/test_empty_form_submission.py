@@ -14,7 +14,7 @@ driver = webdriver.Chrome(options=options)
 
 try:
     # Open your calculator page
-    driver.get("http://localhost/sustainable-travel-planner/calculator.php") 
+    driver.get("http://localhost:8080/sustainable-travel-planner/calculator.php") 
 
     # Find transport dropdown and leave it as default (e.g. Car)
     transport_select = Select(driver.find_element(By.ID, "transport"))

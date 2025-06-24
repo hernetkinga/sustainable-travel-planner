@@ -23,7 +23,7 @@ try:
     ]
 
     for mode in transport_modes:
-        driver.get("http://localhost/sustainable-travel-planner/calculator.php")
+        driver.get("http://localhost:8080/sustainable-travel-planner/calculator.php")
         
         # Wait for page to fully load
         time.sleep(1)

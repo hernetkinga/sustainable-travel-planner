@@ -12,7 +12,7 @@ options.add_argument("--window-size=1920,1080")
 driver = webdriver.Chrome(options=options)
 
 try:
-    driver.get("http://localhost/sustainable-travel-planner/calculator.php")
+    driver.get("http://localhost:8080/sustainable-travel-planner/calculator.php")
 
     # Fill in garbage addresses
     origin_input = WebDriverWait(driver, 10).until(
@@ -34,7 +34,7 @@ try:
 
     # Wait for response
     result_box = WebDriverWait(driver, 10).until(
-        EC.presence_of_element_located((By.CLASS_NAME, "carbon-card"))
+        EC.visibility_of_element_located((By.CLASS_NAME, "carbon-card"))
     )
 
     result_text = result_box.text.lower()

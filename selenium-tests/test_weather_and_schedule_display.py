@@ -14,7 +14,7 @@ options.add_argument("--window-size=1280,900")
 driver = webdriver.Chrome(options=options)
 
 try:
-    driver.get("http://localhost/sustainable-travel-planner/calculator.php")
+    driver.get("http://localhost:8080/sustainable-travel-planner/calculator.php")
 
     # Fill in the form
     origin_input = WebDriverWait(driver, 10).until(
